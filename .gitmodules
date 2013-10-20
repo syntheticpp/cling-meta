@@ -7,3 +7,6 @@
 [submodule "llvm"]
 	path = llvm
 	url = git://github.com/llvm-mirror/llvm.git
+[submodule "cling"]
+	path = cling
+	url = http://root.cern.ch/git/cling.git
