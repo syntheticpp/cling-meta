@@ -1,0 +1,40 @@
+#!/bin/bash
+
+git submodule init
+git submodule foreach git fetch
+git submodule update
+
+
+
+function cling_patches {
+    echo Getting Cling patched
+	cd $1
+	git remote add cling http://root.cern.ch/git/$1.git
+	git fetch cling
+	cd ..
+}
+cling_patches llvm
+cling_patches clang
+
+
+
+# check out committed submodule refs
+git submodule update
+
+
+
+function check_link {
+    if [ ! -d "$2" ]; then
+        echo Creating symbolic link $2 to $PWD/$1
+        ln  -s $PWD/$1 $2
+    fi
+}
+check_link cling        llvm/tools/cling
+check_link clang        llvm/tools/clang
+check_link compiler-rt  llvm/projects/compiler-rt
+
+
+
+# show summary
+git status
+
