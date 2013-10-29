@@ -1,45 +1,70 @@
 #!/bin/bash
 
-git submodule init
-git submodule foreach git fetch
-git submodule update
+arg=$1
 
-
-echo
-if [ "$1" = "--hard" ]; then
-	echo "    Resetting HARD to latest cling refs"
-else
-	echo "    Checking out committed submodule refs"
-	echo "    Use --hard do get latest Cling changes (local changes will be lost)"
+if [ ! -d ".git/modules" ]; then
+    arg=init
 fi
-echo
 
 
-function cling_patches {
-    echo Getting Cling patched
-	cd $1
-	git remote add cling http://root.cern.ch/git/$1.git
-	git fetch cling
-	if [ "$2" = "--hard" ]; then
-		git reset --hard cling/cling-patches
-	fi
-	cd ..
+function remote_add {
+    cd $3
+    quiet=`git remote add $1 $2/$3.git 2>&1`
+    git fetch $1 -q
+    quiet=`git checkout -b cling-patches $1/cling-patches -q 2>&1`
+    git checkout cling-patches -q
+    cd ..
 }
-cling_patches llvm  $1
-cling_patches clang $1
 
 
-
-
-if [ "$1" = "--hard" ]; then
-	cd cling
-		git reset --hard origin/master
-	cd ..
-else
-	git submodule update
+if [ "$arg" = "init" ]; then
+    echo "Initializing repositories ..."
+    git submodule init -q
+    git submodule update
+    remote_add cern http://root.cern.ch/git llvm
+    remote_add syntheticpp https://github.com/syntheticpp llvm
+    remote_add cern http://root.cern.ch/git clang
+    git submodule update -q
+    echo "Repositories downloaded, please re-run ./update"
+    exit 0
 fi
 
 
+if [ "$1" = "--hard" ]; then
+    echo "Resetting HARD to latest CERN changes"
+else
+    echo "Checking out committed submodule refs"
+    echo "Use --hard do get latest CERN changes (local changes will be lost)"
+fi
+
+
+function fetch {
+    cd $1
+    git fetch $2 -q
+    cd ..
+}
+
+fetch llvm  origin
+fetch llvm  cern
+fetch llvm  syntheticpp
+fetch clang origin
+fetch clang cern
+
+
+function reset_hard {
+    cd $1
+    git checkout cling-patches -q
+    git reset --hard $2/cling-patches -q
+    cd ..
+}
+
+
+if [ "$1" = "--hard" ]; then
+    reset_hard llvm  cern
+    reset_hard clang cern
+else
+    git submodule update 
+fi
 
 
 function check_link {
@@ -52,8 +77,4 @@ check_link cling        llvm/tools/cling
 check_link clang        llvm/tools/clang
 check_link compiler-rt  llvm/projects/compiler-rt
 
-
-
-# show summary
-git status
 
