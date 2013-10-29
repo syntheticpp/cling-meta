@@ -1,7 +1,8 @@
 #!/bin/bash
 
 lastver=`stat -c %Z update`
-git pull -q origin $meta_branch
+git fetch origin -q
+git reset origin $meta_branch -q
 actualver=`stat -c %Z update`
 
 if [ ! $lastver -eq $actualver ]; then
@@ -34,8 +35,9 @@ if [ "$arg" = "init" ]; then
     git submodule init -q
     git submodule update
     remote_add cern http://root.cern.ch/git llvm
-    remote_add syntheticpp https://github.com/syntheticpp llvm
     remote_add cern http://root.cern.ch/git clang
+    remote_add syntheticpp https://github.com/syntheticpp llvm
+    remote_add syntheticpp https://github.com/syntheticpp cling
     git submodule update -q
     echo "Repositories downloaded, please re-run ./update"
     exit 0
@@ -80,9 +82,9 @@ fi
 
 
 function check_link {
-    if [ ! -d "$2" ]; then
+    if [ ! -f "$2/CMakeLists.txt" ]; then
         echo Creating symbolic link $2 to $PWD/$1
-        ln  -s $PWD/$1 $2
+        ln  -s $PWD/$1 $PWD/$2
     fi
 }
 check_link cling        llvm/tools/cling
