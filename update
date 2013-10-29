@@ -1,5 +1,17 @@
 #!/bin/bash
 
+lastver=`stat -c %Z update`
+git pull -q origin $meta_branch
+actualver=`stat -c %Z update`
+
+if [ ! $lastver -eq $actualver ]; then
+    echo "----"
+    echo "---- got new 'update' script, please rerun ./update".
+    echo "----"
+    exit 0
+fi
+
+
 arg=$1
 
 if [ ! -d ".git/modules" ]; then
